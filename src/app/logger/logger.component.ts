@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {Observable, Subscriber} from 'rxjs/Rx';
+import { Observable, Subscriber } from 'rxjs/Rx';
 
 
 
@@ -14,10 +14,14 @@ export class LoggerComponent implements OnInit {
   private $sharableObs;
   private $reducer;
   private $scanObs;
+  private $fibonacciStreamGenerator;
 
   constructor() { }
 
   ngOnInit() {
+
+    // Generates a observable stream using fibonacci series
+    this.generateFibonacciSeries(10);
 
     this.createObservableStream();
 
@@ -32,10 +36,10 @@ export class LoggerComponent implements OnInit {
     this.$obs = Observable.interval(500).take(5).do(i => console.log('obs value ' + i));
 
     // reduces the created stream
-    this.$reducer = this.$obs.reduce((state, value) =>  state + value , 0);
+    this.$reducer = this.$obs.reduce((state, value) => state + value, 0);
 
     // perfroms scanning of the created stream
-    this.$scanObs = this.$obs.scan((state, value) => state + value , 0);
+    this.$scanObs = this.$obs.scan((state, value) => state + value, 0);
 
     // The extra share function added on the end of the observable chain allows the observable to be shared among
     // multiple subscriber.
@@ -62,7 +66,50 @@ export class LoggerComponent implements OnInit {
 
     this.$sharableObs.subscribe(value => console.log('sharable observer 2 received ' + value));
 
+    // Subscribe to fabonacci Stream
+    this.$fibonacciStreamGenerator.subscribe(value => console.log('The fibonacci number is ' + value));
+  }
+
+  // The function is used to generate the steam according using the seies.
+  // It gets the series from the series generator and than use the generated series to create a stream.
+  // This allows us to create a custom stream from the number series that is desired for the usage.
+  generateFibonacciSeries(steps: number) {
+    console.log('generating fibonacci series till step ' + steps);
+    this.$fibonacciStreamGenerator = Observable.from(this.seriesGenerator(steps, 'fabonacci')())
+      .take(steps).scan((state, value) => value, 0);
+
 
   }
+
+// Returns a function that generate the type of series defined in the series type
+  seriesGenerator(steps: number, seriesType: string): Function {
+
+    switch (seriesType) {
+      case 'fabonacci':
+        return function fibonacci(): number[] {
+          let fn1 = 1;
+          let fn2 = 1;
+          let stepCount = 0;
+          let fabArr = [1];
+          while (stepCount < steps) {
+            let current = fn2;
+            fn2 = fn1;
+            fn1 = fn1 + current;
+            fabArr.push(fn1);
+            stepCount++;
+          }
+          return fabArr;
+        };
+      default:
+        return function simpleSeries(): number[] {
+          let arr = [];
+          for (let i = 0; i < steps; i++) {
+            arr.push(steps);
+          }
+          return arr;
+        };
+    }
+  }
+
 
 }
